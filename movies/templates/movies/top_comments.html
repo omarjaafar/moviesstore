@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Top Comments</h2>
+  <ul>
+    {% for comment in comments %}
+      <li>
+        <strong>{{ comment.author }}</strong> on <em>{{ comment.movie.title }}</em>:  
+        {{ comment.text }} ({{ comment.likes }} likes)
+
+        <form action="{% url 'like_comment' comment.id %}" method="post" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit">👍 Like</button>
+        </form>
+      </li>
+    {% empty %}
+      <li>No comments yet.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

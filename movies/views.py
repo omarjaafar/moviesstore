@@ -16,7 +16,7 @@ def index(request):
 
 def show(request, id):
     movie = Movie.objects.get(id=id)
-    reviews = Review.objects.filter(movie=movie)
+    reviews = Review.objects.filter(movie=movie).order_by('-likes', '-date')
 
     template_data = {}
     template_data['title'] = movie.name
@@ -61,3 +61,15 @@ def delete_review(request, id, review_id):
     review = get_object_or_404(Review, id=review_id, user=request.user)
     review.delete()
     return redirect('movies.show', id=id)
+
+
+def top_comments(request):
+    comments = Review.objects.order_by('-likes')[:10]  # top 10 by likes
+    return render(request, 'movies/top_comments.html', {'comments': comments})
+
+@login_required
+def like_comment(request, comment_id):
+    review = get_object_or_404(Review, id=comment_id)
+    review.likes += 1
+    review.save()
+    return redirect('movies.show', id=review.movie.id)  # back to the movie page
