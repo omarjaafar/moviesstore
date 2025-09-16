@@ -11,5 +11,5 @@ urlpatterns = [
     path('comments/<int:comment_id>/like/', views.like_comment, name='like_comment'),
     path('<int:id>/', views.show, name='movies.show'),
     path('reviews/<int:comment_id>/like/', views.like_comment, name='like_comment'),
-
+    path('<int:id>/reviews/<int:review_id>/report/', views.report_review, name='movies.report_review'),
 ]

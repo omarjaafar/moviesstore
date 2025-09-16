@@ -42,10 +42,16 @@
             <p><b>{{ review.likes }}</b> likes</p>
 
             {% if user.is_authenticated %}
+            <!-- Like button -->
             <form action="{% url 'like_comment' review.id %}" method="post" style="display:inline;">
-
               {% csrf_token %}
               <button type="submit" class="btn btn-outline-success btn-sm">👍 Like</button>
+            </form>
+
+            <!-- Report button -->
+            <form action="{% url 'movies.report_review' id=template_data.movie.id review_id=review.id %}" method="post" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-warning btn-sm">🚩 Report</button>
             </form>
             {% endif %}
 

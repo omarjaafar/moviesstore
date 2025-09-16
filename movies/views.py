@@ -73,3 +73,9 @@ def like_comment(request, comment_id):
     review.likes += 1
     review.save()
     return redirect('movies.show', id=review.movie.id)  # back to the movie page
+
+@login_required
+def report_review(request, id, review_id):
+    review = get_object_or_404(Review, id=review_id, movie_id=id)
+    review.delete()   # simplest solution: just delete it
+    return redirect('movies.show', id=id)
