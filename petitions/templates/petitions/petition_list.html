@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-3">
+  <div class="container">
+    <div class="row mt-3">
+      <div class="col mx-auto mb-3">
+        <h2>Petitions</h2>
+        <hr />
+        <a href="{% url 'petition_create' %}" class="btn bg-dark text-white mb-3">
+          Create New Petition
+        </a>
+      </div>
+    </div>
+    <div class="row">
+      {% for petition in petitions %}
+      <div class="col-md-4 col-lg-3 mb-2">
+        <div class="p-2 card align-items-center pt-4">
+          <div class="card-body text-center">
+            <h5>{{ petition.title }}</h5>
+            <p class="text-muted">By {{ petition.created_by.username }}</p>
+            <p>Yes votes: {{ petition.votes_count }}</p>
+            <a href="{% url 'petition_detail' petition.id %}" class="btn bg-dark text-white">
+              View Petition
+            </a>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <p>No petitions yet. Be the first to create one!</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock content %}
