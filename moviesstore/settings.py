@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-xifpkqp1i$lkt$*&4e+&ic_ui$z95s03!*1#p159p8))5dp0hz
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [*]
 
 
 # Application definition
@@ -128,7 +128,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATICFILES_DIRS = [
-    BASE_DIR / 'moviesstore/static/',
+    BASE_DIR / 'moviesstore/static/','ojaafar3.pythonanywhere.com', '127.0.0.1', 'localhost'
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
