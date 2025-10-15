@@ -12,4 +12,6 @@ urlpatterns = [
     path('<int:id>/', views.show, name='movies.show'),
     path('reviews/<int:comment_id>/like/', views.like_comment, name='like_comment'),
     path('<int:id>/reviews/<int:review_id>/report/', views.report_review, name='movies.report_review'),
+    path('<int:id>/vote/up/', views.vote_movie, {'vote_type': 'up'}, name='movies.vote_up'),
+    path('<int:id>/vote/down/', views.vote_movie, {'vote_type': 'down'}, name='movies.vote_down'),
 ]

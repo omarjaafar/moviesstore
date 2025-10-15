@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Movie, Review
+from .models import Movie, Review, MovieVote
 from django.contrib.auth.decorators import login_required
 
 def index(request):
@@ -18,10 +18,17 @@ def show(request, id):
     movie = Movie.objects.get(id=id)
     reviews = Review.objects.filter(movie=movie).order_by('-likes', '-date')
 
+    thumbs_up_count = movie.get_thumbs_up_count()
+    thumbs_down_count = movie.get_thumbs_down_count()
+    user_vote = movie.user_vote(request.user)
+
     template_data = {}
     template_data['title'] = movie.name
     template_data['movie'] = movie
     template_data['reviews'] = reviews
+    template_data['thumbs_up_count'] = thumbs_up_count
+    template_data['thumbs_down_count'] = thumbs_down_count
+    template_data['user_vote'] = user_vote
     return render(request, 'movies/show.html', {'template_data': template_data})
 
 @login_required
@@ -78,4 +85,20 @@ def like_comment(request, comment_id):
 def report_review(request, id, review_id):
     review = get_object_or_404(Review, id=review_id, movie_id=id)
     review.delete()   # simplest solution: just delete it
+    return redirect('movies.show', id=id)
+
+@login_required
+def vote_movie(request, id, vote_type):
+    movie = get_object_or_404(Movie, id=id)
+    existing_vote = MovieVote.objects.filter(user=request.user, movie=movie).first()
+
+    if existing_vote:
+        if existing_vote.vote_type == vote_type:
+            existing_vote.delete()
+        else:
+            existing_vote.vote_type = vote_type
+            existing_vote.save()
+    else:
+        MovieVote.objects.create(user=request.user, movie=movie, vote_type=vote_type)
+    
     return redirect('movies.show', id=id)
