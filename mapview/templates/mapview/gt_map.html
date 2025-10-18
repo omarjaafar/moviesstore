@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Georgia Tech Campus Map</h2>
+  <div id="map" style="height: 500px; border-radius: 10px;"></div>
+</div>
+
+<!-- Leaflet CSS + JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+  // Create map centered on Georgia Tech
+  const map = L.map('map').setView([33.7756, -84.3963], 16); // GT coordinates
+
+  // Add base map tiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Optional marker at GT
+  L.marker([33.7756, -84.3963])
+    .addTo(map)
+    .bindPopup("<b>Georgia Tech</b><br>Atlanta, GA")
+    .openPopup();
+</script>
+{% endblock %}

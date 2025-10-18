@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'accounts',
     'cart',
     'petitions',
+    'mapview',
 ]
 
 MIDDLEWARE = [
