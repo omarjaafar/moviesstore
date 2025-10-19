@@ -1,8 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-  <h2>Georgia Tech Campus Map</h2>
+  <h2>Local Popularity Map</h2>
+
+
+  <!-- Map container -->
   <div id="map" style="height: 500px; border-radius: 10px;"></div>
+  <div class="mt-3">
+  <h4>🎬 Top Trending Movies (Global)</h4>
+  <ul id="trendingList" class="list-group"></ul>
+</div>
+
 </div>
 
 <!-- Leaflet CSS + JS -->
@@ -10,19 +18,154 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-  // Create map centered on Georgia Tech
-  const map = L.map('map').setView([33.7756, -84.3963], 16); // GT coordinates
+const map = L.map("map").setView([20, 0], 2);
 
-  // Add base map tiles
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+  attribution: "&copy; OpenStreetMap contributors",
+}).addTo(map);
 
-  // Optional marker at GT
-  L.marker([33.7756, -84.3963])
-    .addTo(map)
-    .bindPopup("<b>Georgia Tech</b><br>Atlanta, GA")
-    .openPopup();
+// one global array of all markers
+window.movieMarkers = [];
+
+function clearMarkers() {
+  if (!window.movieMarkers) return;
+  window.movieMarkers.forEach((m) => map.removeLayer(m));
+  window.movieMarkers = [];
+}
+
+// ✅ draw markers for a single movie
+async function loadMovieLocations(movieId) {
+  const url = `/map/api/movie/${movieId}/locations/`;
+  console.log("Fetching pins for movie", movieId, "from", url);
+
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    const data = await res.json();
+    console.log(`→ ${data.length} locations for movie ${movieId}`, data);
+
+    data.forEach((loc) => {
+      if (loc.lat && loc.lng) {
+        const marker = L.marker([loc.lat, loc.lng]).addTo(map);
+        marker.bindPopup(
+          `<b>${loc.city}, ${loc.state}</b><br>${loc.country}<br>${loc.count} purchase${loc.count > 1 ? "s" : ""}`
+        );
+        window.movieMarkers.push(marker);
+      }
+    });
+  } catch (err) {
+    console.error("Error loading map data for movie", movieId, err);
+  }
+}
+
+// ✅ load all movies' pins
+async function loadAllMovies() {
+  console.log("Loading all movie pins...");
+  const res = await fetch("/movies/", { cache: "no-store" });
+  const html = await res.text();
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = html;
+
+  const movieLinks = tempDiv.querySelectorAll("a[href^='/movies/']");
+  const movieIds = new Set();
+  movieLinks.forEach((link) => {
+    const href = link.getAttribute("href");
+    const match = href.match(/\/movies\/(\d+)/);
+    if (match) movieIds.add(match[1]);
+  });
+
+  clearMarkers();
+  for (const id of movieIds) {
+    await loadMovieLocations(id);
+  }
+}
+
+
+
+// 🌍 Load continent-level polygons (using countries.geojson)
+// 🌎 Load country-level polygons
+async function loadCountries() {
+  console.log("Loading country-level polygons...");
+  const [apiRes, geoRes] = await Promise.all([
+    fetch("/map/api/countries/"),
+    fetch("https://raw.githubusercontent.com/datasets/geo-countries/main/data/countries.geojson")
+  ]);
+
+  const data = await apiRes.json();
+  const geojson = await geoRes.json();
+
+  // Turn [{country, count}] → { "United States of America": 21, ... }
+  const countryCounts = Object.fromEntries(data.map(d => [d.country, d.count]));
+
+  // Track currently selected country for highlight
+  let selectedLayer = null;
+
+  const geoLayer = L.geoJSON(geojson, {
+    style: feature => {
+      const name = feature.properties.name;
+      const count = countryCounts[name] || 0;
+      const fillOpacity = count > 0 ? 0.6 : 0.15;
+      const fillColor = count > 0 ? "#7c3aed" : "#ccc";
+
+      return {
+        color: "purple",
+        weight: 1,
+        fillColor: fillColor,
+        fillOpacity: fillOpacity,
+      };
+    },
+    onEachFeature: (feature, layer) => {
+      const name = feature.properties.name;
+      const count = countryCounts[name] || 0;
+      layer.bindPopup(`<b>${name}</b><br>${count} purchase${count !== 1 ? "s" : ""}`);
+
+      // Click highlight effect
+      layer.on("click", function () {
+        if (selectedLayer) geoLayer.resetStyle(selectedLayer);
+        selectedLayer = layer;
+        layer.setStyle({
+          color: "gold",
+          weight: 3,
+          fillOpacity: 0.75,
+        });
+        layer.bringToFront(); // keeps highlight visible
+      });
+    },
+  });
+
+  geoLayer.addTo(map);
+}
+
+async function loadTrendingMovies() {
+  console.log("Loading trending movies...");
+  const res = await fetch("/map/api/trending/");
+  const data = await res.json();
+
+  const list = document.getElementById("trendingList");
+  list.innerHTML = "";
+
+  data.forEach((movie) => {
+    const li = document.createElement("li");
+    li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.innerHTML = `
+      <div>
+        <strong>${movie.movie}</strong><br>
+        <small class="text-muted">Trending in ${movie.region} (${movie.region_count} purchases)</small>
+      </div>
+      <span class="badge bg-primary">${movie.total}</span>
+    `;
+    list.appendChild(li);
+  });
+}
+
+
+
+// ✅ Run continent view first, then individual movie markers
+(async () => {
+  await loadCountries();
+  await loadTrendingMovies();
+  await loadAllMovies();
+})();
 </script>
+
 {% endblock %}
