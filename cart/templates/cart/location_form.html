@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Confirm Purchase</h2>
+  <form method="POST" action="{% url 'cart.purchase' %}">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="city" class="form-label">City</label>
+      <input type="text" name="city" id="city" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="state" class="form-label">State</label>
+      <input type="text" name="state" id="state" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label for="country" class="form-label">Country</label>
+      <input type="text" name="country" id="country" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Complete Purchase</button>
+  </form>
+</div>
+{% endblock content %}
