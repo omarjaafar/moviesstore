@@ -10,21 +10,39 @@
         <p><b>Description:</b> {{ template_data.movie.description }}</p>
         <p><b>Price:</b> ${{ template_data.movie.price }}</p>
         <p class="card-text">
-          <form method="post" action="{% url 'cart.add' id=template_data.movie.id %}">
-            <div class="row">
-              {% csrf_token %}
-              <div class="col-auto">
-                <div class="input-group col-auto">
-                  <div class="input-group-text">Quantity</div>
-                  <input type="number" min="1" max="10" class="form-control quantity-input" name="quantity" value="1">
-                </div>
-              </div>
-              <div class="col-auto">
-                <button class="btn bg-dark text-white" type="submit">Add to cart</button>
+        <form method="post" action="{% url 'cart.add' id=template_data.movie.id %}">
+          <div class="row">
+            {% csrf_token %}
+            <div class="col-auto">
+              <div class="input-group col-auto">
+                <div class="input-group-text">Quantity</div>
+                <input type="number" min="1" max="10" class="form-control quantity-input" name="quantity" value="1">
               </div>
             </div>
-          </form>
+            <div class="col-auto">
+              <button class="btn bg-dark text-white" type="submit">Add to cart</button>
+            </div>
+          </div>
+        </form>
         </p>
+
+        <h5 class="mb-2">Movie Rating</h5>
+
+        <div class="mt-3 mb-3">
+          <h5>Movie Rating</h5>
+          <div class="d-flex align-items-center"> <span class="me-3"> <strong>
+            {{ template_data.thumbs_up_count }}</strong> 👍 </span> <span class="me-3"> <strong>{{ template_data.thumbs_down_count }}</strong> 👎
+            </span> {% if user.is_authenticated %} <div class="btn-group" role="group">
+              <form action="{% url 'movies.vote_up' id=template_data.movie.id %}" method="post" style="display:inline;">
+                {% csrf_token %} <button type="submit"
+                  class="btn btn-outline-success btn-sm {% if template_data.user_vote == 'up' %}active{% endif %}"> 👍
+                  Thumbs Up </button> </form>
+              <form action="{% url 'movies.vote_down' id=template_data.movie.id %}" method="post"
+                style="display:inline;"> {% csrf_token %} <button type="submit"
+                  class="btn btn-outline-danger btn-sm {% if template_data.user_vote == 'down' %}active{% endif %}"> 👎
+                  Thumbs Down </button> </form>
+            </div> {% endif %} </div>
+        </div>
 
         <h2>Reviews</h2>
         <hr />
@@ -49,7 +67,8 @@
             </form>
 
             <!-- Report button -->
-            <form action="{% url 'movies.report_review' id=template_data.movie.id review_id=review.id %}" method="post" style="display:inline;">
+            <form action="{% url 'movies.report_review' id=template_data.movie.id review_id=review.id %}" method="post"
+              style="display:inline;">
               {% csrf_token %}
               <button type="submit" class="btn btn-warning btn-sm">🚩 Report</button>
             </form>
