@@ -6,5 +6,6 @@ urlpatterns = [
     path("api/movie/<int:movie_id>/locations/", views.movie_locations_api, name="movie_locations_api"),
     path("api/continents/", views.continent_popularity_api, name="continent_popularity_api"),  # ✅ new
     path("api/countries/", views.country_popularity_api, name="country_popularity_api"),
+    path("api/country/top_movie/", views.country_top_movie_api, name="country_top_movie_api"),
     path("api/trending/", views.trending_movies_api, name="trending_movies_api"),
 ]

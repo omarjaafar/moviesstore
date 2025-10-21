@@ -117,10 +117,11 @@ async function loadCountries() {
     onEachFeature: (feature, layer) => {
       const name = feature.properties.name;
       const count = countryCounts[name] || 0;
+      // Bind a basic popup first, we'll enrich it on click
       layer.bindPopup(`<b>${name}</b><br>${count} purchase${count !== 1 ? "s" : ""}`);
 
-      // Click highlight effect
-      layer.on("click", function () {
+      // Click highlight effect + show top movie for this country
+      layer.on("click", async function () {
         if (selectedLayer) geoLayer.resetStyle(selectedLayer);
         selectedLayer = layer;
         layer.setStyle({
@@ -129,6 +130,30 @@ async function loadCountries() {
           fillOpacity: 0.75,
         });
         layer.bringToFront(); // keeps highlight visible
+
+        // Fetch top movie for this country and replace popup content
+        try {
+          const url = `/map/api/country/top_movie/?country=${encodeURIComponent(name)}`;
+          const resp = await fetch(url, { cache: "no-store" });
+          if (!resp.ok) {
+            console.error("Top movie API error", resp.status);
+            return;
+          }
+          const top = await resp.json();
+          let content = `<b>${name}</b><br>${count} purchase${count !== 1 ? "s" : ""}`;
+          if (top && top.name) {
+            content += `<hr><b>Top movie:</b> ${top.name} <small>(${top.count} purchases)</small>`;
+            if (top.image_url) {
+              content += `<br><img src="${top.image_url}" style="max-width:120px; max-height:80px; margin-top:6px; display:block;" />`;
+            }
+          } else {
+            content += `<hr><i>No purchases with location in this country</i>`;
+          }
+          layer.setPopupContent(content);
+          layer.openPopup();
+        } catch (err) {
+          console.error("Error fetching top movie for country", name, err);
+        }
       });
     },
   });

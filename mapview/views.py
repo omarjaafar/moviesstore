@@ -248,3 +248,71 @@ def trending_movies_api(request):
     movie_totals.sort(key=lambda x: x["total"], reverse=True)
     return JsonResponse(movie_totals[:5], safe=False)
 
+
+@require_GET
+def country_top_movie_api(request):
+    """Return the most purchased movie for a given country (query param: country).
+
+    Example: /map/api/country/top_movie/?country=United%20States%20of%20America
+    """
+    country = request.GET.get("country")
+    if not country:
+        return JsonResponse({"error": "country parameter required"}, status=400)
+
+    def normalize_country(country):
+        if not country:
+            return ""
+        c = country.strip().lower()
+        aliases = {
+            "us": "United States of America",
+            "u.s.": "United States of America",
+            "usa": "United States of America",
+            "united states": "United States of America",
+            "united states of america": "United States of America",
+            "america": "United States of America",
+            "uk": "United Kingdom",
+            "england": "United Kingdom",
+            "great britain": "United Kingdom",
+        }
+        return aliases.get(c, country.title())
+
+    target = normalize_country(country)
+
+    # Load items and do a manual normalized aggregation so common variants match
+    items = Item.objects.filter(order__location__isnull=False).select_related(
+        "movie", "order__location"
+    )
+
+    movie_counts = {}
+    movie_objs = {}
+    for item in items:
+        loc = item.order.location
+        item_country = loc.country if loc and loc.country else ""
+        if normalize_country(item_country) != target:
+            continue
+        mid = item.movie.id
+        movie_counts[mid] = movie_counts.get(mid, 0) + 1
+        movie_objs[mid] = item.movie
+
+    if not movie_counts:
+        # No purchases for this country
+        return JsonResponse({}, safe=False)
+
+    top_mid = max(movie_counts, key=movie_counts.get)
+    top_movie = movie_objs[top_mid]
+    top_count = movie_counts[top_mid]
+
+    image_url = None
+    try:
+        if top_movie.image and hasattr(top_movie.image, 'url'):
+            image_url = request.build_absolute_uri(top_movie.image.url)
+    except Exception:
+        image_url = None
+
+    return JsonResponse({
+        "id": top_movie.id,
+        "name": top_movie.name,
+        "count": top_count,
+        "image_url": image_url,
+    }, safe=False)
+
